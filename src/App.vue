@@ -65,6 +65,8 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { open } from '@tauri-apps/plugin-dialog'
+import { readTextFile } from '@tauri-apps/plugin-fs'
 import ConfigDialog from './components/ConfigDialog.vue'
 import TxtReader from './components/TxtReader.vue'
 import type { FontFamily, SplitMethod } from './types/reader-config'
@@ -83,6 +85,11 @@ const NOVEL_CHAPTER_KEY_PREFIX = 'txt-novel-reader.novel-chapter.'
 const LATEST_NOVEL_TEXT_KEY = 'txt-novel-reader.latest-novel-text'
 const LATEST_NOVEL_NAME_KEY = 'txt-novel-reader.latest-novel-name'
 const SIDEBAR_OPEN_KEY = 'txt-novel-reader.sidebar-open'
+const ZOOM_STORAGE_KEY = 'txt-novel-reader.zoom'
+const DEFAULT_ZOOM = 1
+const ZOOM_STEP = 0.1
+const ZOOM_MIN = 0.5
+const ZOOM_MAX = 3
 const DEFAULT_SPLIT_REGEX = '第.*章[^\\n\\r]*'
 const DEFAULT_SPLIT_MAX_LINE_COUNT = '20'
 
@@ -132,6 +139,7 @@ const themeLabels: Record<ReaderThemeName, string> = {
 const selectedThemeName = ref<ReaderThemeName>('white')
 const fontSize = ref(DEFAULT_FONT_SIZE)
 const fontFamily = ref<FontFamily>(DEFAULT_FONT_FAMILY)
+const zoom = ref(DEFAULT_ZOOM)
 const fontFamilyNames: FontFamily[] = ['system', 'serif', 'sans-serif', 'monospace']
 
 const selectedTheme = computed(() => readerThemes[selectedThemeName.value])
@@ -169,6 +177,14 @@ function isFontFamily(value: string): value is FontFamily {
   return value === 'system' || value === 'serif' || value === 'sans-serif' || value === 'monospace'
 }
 
+function isTauriDesktop(): boolean {
+  return '__TAURI_INTERNALS__' in window
+}
+
+function getFileNameFromPath(path: string): string {
+  return path.split(/[\\/]/).pop() ?? path
+}
+
 function openSettings(): void {
   isSettingsOpen.value = true
 }
@@ -190,6 +206,24 @@ function onWindowKeydown(event: KeyboardEvent): void {
   if (event.metaKey && event.key === ',') {
     event.preventDefault()
     openSettings()
+    return
+  }
+
+  if (event.metaKey && (event.key === '=' || event.key === '+')) {
+    event.preventDefault()
+    zoom.value = Math.min(ZOOM_MAX, Math.round((zoom.value + ZOOM_STEP) * 10) / 10)
+    return
+  }
+
+  if (event.metaKey && event.key === '-') {
+    event.preventDefault()
+    zoom.value = Math.max(ZOOM_MIN, Math.round((zoom.value - ZOOM_STEP) * 10) / 10)
+    return
+  }
+
+  if (event.metaKey && event.key === '0') {
+    event.preventDefault()
+    zoom.value = DEFAULT_ZOOM
     return
   }
 
@@ -220,6 +254,15 @@ onMounted(async () => {
   if (persistedFontFamily && isFontFamily(persistedFontFamily)) {
     fontFamily.value = persistedFontFamily
   }
+
+  const persistedZoom = window.localStorage.getItem(ZOOM_STORAGE_KEY)
+  if (persistedZoom) {
+    const parsed = parseFloat(persistedZoom)
+    if (!isNaN(parsed) && parsed >= ZOOM_MIN && parsed <= ZOOM_MAX) {
+      zoom.value = parsed
+    }
+  }
+  document.documentElement.style.zoom = String(zoom.value)
 
   const persistedSplitRegex = window.localStorage.getItem(SPLIT_REGEX_STORAGE_KEY)
   if (persistedSplitRegex) {
@@ -293,6 +336,11 @@ watch(fontFamily, (value) => {
   window.localStorage.setItem(FONT_FAMILY_STORAGE_KEY, value)
 })
 
+watch(zoom, (value) => {
+  document.documentElement.style.zoom = String(value)
+  window.localStorage.setItem(ZOOM_STORAGE_KEY, String(value))
+})
+
 watch(chapterIndex, (value) => {
   if (novelHash.value === null) {
     return
@@ -308,23 +356,30 @@ watch([splitMethod, splitRegex, splitMaxLineCount], ([method, regex, maxLineCoun
   window.localStorage.setItem(NOVEL_SPLIT_CONFIG_KEY_PREFIX + novelHash.value, JSON.stringify(config))
 })
 
-function openFileDialog(): void {
-  fileInput.value?.click()
-}
-
-async function onFileChange(event: Event): Promise<void> {
-  const input = event.target as HTMLInputElement
-  const file = input.files?.[0]
-
-  if (!file) {
+async function openFileDialog(): Promise<void> {
+  if (!isTauriDesktop()) {
+    fileInput.value?.click()
     return
   }
 
-  const text = await file.text()
+  const selected = await open({
+    multiple: false,
+    filters: [{ name: 'Text', extensions: ['txt'] }]
+  })
+
+  if (!selected || Array.isArray(selected)) {
+    return
+  }
+
+  const text = await readTextFile(selected)
+  await applyLoadedNovel(text, getFileNameFromPath(selected))
+}
+
+async function applyLoadedNovel(text: string, name: string): Promise<void> {
   novel.value = text
-  fileName.value = file.name
+  fileName.value = name
   window.localStorage.setItem(LATEST_NOVEL_TEXT_KEY, text)
-  window.localStorage.setItem(LATEST_NOVEL_NAME_KEY, file.name)
+  window.localStorage.setItem(LATEST_NOVEL_NAME_KEY, name)
 
   const hash = await hashNovel(text)
   novelHash.value = hash
@@ -353,6 +408,18 @@ async function onFileChange(event: Event): Promise<void> {
     splitRegex.value = DEFAULT_SPLIT_REGEX
     splitMaxLineCount.value = DEFAULT_SPLIT_MAX_LINE_COUNT
   }
+}
+
+async function onFileChange(event: Event): Promise<void> {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+
+  if (!file) {
+    return
+  }
+
+  const text = await file.text()
+  await applyLoadedNovel(text, file.name)
 
   input.value = ''
 }

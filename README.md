@@ -1,6 +1,6 @@
 # Txt Novel Reader
 
-一個輕量的本地 `.txt` 小說閱讀器，以 Vue 3 + TypeScript + Vite 打造，無須後端、直接在瀏覽器執行。
+一個輕量的本地 `.txt` 小說閱讀器，以 Vue 3 + TypeScript + Vite + Tauri 打造，無須後端，資料皆在本機處理。
 
 ## 功能
 
@@ -19,8 +19,11 @@
 # 安裝依賴
 npm install
 
-# 啟動開發伺服器
+# 啟動 Web 開發伺服器（Vite）
 npm run dev
+
+# 啟動桌面版開發模式（Tauri + Vite）
+npm run tauri:dev
 
 # 建置正式版
 npm run build
@@ -31,3 +34,5 @@ npm run build
 - [Vue 3](https://vuejs.org/) (Composition API)
 - [TypeScript](https://www.typescriptlang.org/)
 - [Vite](https://vitejs.dev/)
+- [Tauri 2](https://tauri.app/)
+- [Rust](https://www.rust-lang.org/)（Tauri 後端）

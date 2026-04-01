@@ -199,6 +199,7 @@ onBeforeUnmount(() => {
 .sidebar {
   transition: all 0.2s ease;
   overflow: hidden;
+  padding: 0.5rem;
 }
 
 .sidebar.hidden {
@@ -247,11 +248,11 @@ onBeforeUnmount(() => {
 .content {
   border: 1px solid var(--reader-panel-border);
   border-radius: 8px;
-  padding: 1rem;
   background: var(--reader-panel-bg);
 }
 
 .content {
+  padding: 4rem;
   grid-column: 2;
 }
 
@@ -267,7 +268,7 @@ onBeforeUnmount(() => {
   border: 1px solid var(--reader-button-border);
   background: var(--reader-button-bg);
   color: var(--reader-text-primary);
-  border-radius: 6px;
+  border-radius: 2px;
   padding: 0.5rem 0.75rem;
   margin-bottom: 0.5rem;
   cursor: pointer;
@@ -298,7 +299,7 @@ onBeforeUnmount(() => {
   border: 1px solid var(--reader-button-border);
   background: var(--reader-button-bg);
   color: var(--reader-text-primary);
-  border-radius: 6px;
+  border-radius: 2px;
   padding: 0.45rem 0.8rem;
   cursor: pointer;
 }

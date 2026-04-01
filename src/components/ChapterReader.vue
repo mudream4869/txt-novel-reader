@@ -190,7 +190,7 @@ onBeforeUnmount(() => {
   position: relative;
   display: grid;
   grid-template-columns: 240px minmax(0, 1fr);
-  gap: 1rem;
+  gap: 0.5rem;
   max-width: 900px;
   margin: 2rem auto;
   transition: grid-template-columns 0.2s ease;

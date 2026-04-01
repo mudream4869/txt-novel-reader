@@ -49,6 +49,39 @@
             </button>
           </div>
         </div>
+
+        <div class="settings-section">
+          <h3>字體</h3>
+          <div class="font-family-switch" role="group" aria-label="字體">
+            <button
+              v-for="name in fontFamilyNames"
+              :key="name"
+              type="button"
+              class="theme-button"
+              :class="{ active: fontFamily === name }"
+              @click="emit('update:fontFamily', name)"
+            >
+              {{ fontFamilyLabels[name] }}
+            </button>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>字級</h3>
+          <div class="font-size-control">
+            <input
+              id="font-size-range"
+              :value="fontSize"
+              type="range"
+              min="12"
+              max="32"
+              step="1"
+              class="font-size-range"
+              @input="onFontSizeInput"
+            />
+            <span class="font-size-value">{{ fontSize }}px</span>
+          </div>
+        </div>
       </div>
 
       <div v-else id="content-panel" class="settings-panel" role="tabpanel">
@@ -123,7 +156,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { SplitMethod } from '../types/reader-config'
+import type { FontFamily, SplitMethod } from '../types/reader-config'
 import type { ReaderThemeName } from '../types/theme'
 
 interface Props {
@@ -137,6 +170,10 @@ interface Props {
   splitMaxLineCount: string
   isSplitRegexValid: boolean
   isSplitMaxLineCountValid: boolean
+  fontSize: string
+  fontFamily: FontFamily
+  fontFamilyNames: FontFamily[]
+  fontFamilyLabels: Record<FontFamily, string>
 }
 
 defineProps<Props>()
@@ -150,6 +187,8 @@ const emit = defineEmits<{
   'update:splitMethod': [value: SplitMethod]
   'update:splitRegex': [value: string]
   'update:splitMaxLineCount': [value: string]
+  'update:fontSize': [value: string]
+  'update:fontFamily': [value: FontFamily]
 }>()
 
 function onSplitRegexInput(event: Event): void {
@@ -160,6 +199,11 @@ function onSplitRegexInput(event: Event): void {
 function onSplitMaxLineCountInput(event: Event): void {
   const target = event.target as HTMLInputElement
   emit('update:splitMaxLineCount', target.value)
+}
+
+function onFontSizeInput(event: Event): void {
+  const target = event.target as HTMLInputElement
+  emit('update:fontSize', target.value)
 }
 </script>
 
@@ -312,6 +356,30 @@ function onSplitMaxLineCountInput(event: Event): void {
   margin: 0.6rem 0 0;
   color: #d94848;
   font-size: 0.9rem;
+}
+
+.font-family-switch {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.font-size-control {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.font-size-range {
+  flex: 1;
+  accent-color: var(--app-button-active-border);
+}
+
+.font-size-value {
+  min-width: 3rem;
+  text-align: right;
+  font-size: 0.9rem;
+  color: var(--app-text-secondary);
 }
 
 @media (max-width: 700px) {

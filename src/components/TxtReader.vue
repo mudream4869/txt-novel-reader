@@ -6,6 +6,8 @@
     :novel-key="novelKey"
     :initial-index="chapterIndex"
     :is-sidebar-open="isSidebarOpen"
+    :font-size="fontSize"
+    :font-family="fontFamily"
     @update:selected-index="emit('update:chapterIndex', $event)"
     @update:is-sidebar-open="emit('update:isSidebarOpen', $event)"
   />
@@ -13,7 +15,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { SplitMethod } from '../types/reader-config'
+import type { FontFamily, SplitMethod } from '../types/reader-config'
 import type { ReaderTheme } from '../types/theme'
 import ChapterReader from './ChapterReader.vue'
 
@@ -26,9 +28,11 @@ interface Props {
   novelKey?: string | null
   chapterIndex?: number
   isSidebarOpen?: boolean
+  fontSize?: string
+  fontFamily?: FontFamily
 }
 
-const { novel, theme, splitMethod, splitRegex, splitMaxLineCount, novelKey, chapterIndex, isSidebarOpen } = defineProps<Props>()
+const { novel, theme, splitMethod, splitRegex, splitMaxLineCount, novelKey, chapterIndex, isSidebarOpen, fontSize, fontFamily } = defineProps<Props>()
 
 const emit = defineEmits<{
   'update:chapterIndex': [value: number]

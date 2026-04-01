@@ -30,6 +30,8 @@
       :novel-key="novelHash"
       :chapter-index="chapterIndex"
       :is-sidebar-open="isSidebarOpen"
+      :font-size="fontSize"
+      :font-family="fontFamily"
       @update:chapter-index="chapterIndex = $event"
       @update:is-sidebar-open="isSidebarOpen = $event"
     />
@@ -45,12 +47,18 @@
       :split-max-line-count="splitMaxLineCount"
       :is-split-regex-valid="isSplitRegexValid"
       :is-split-max-line-count-valid="isSplitMaxLineCountValid"
+      :font-size="fontSize"
+      :font-family="fontFamily"
+      :font-family-names="fontFamilyNames"
+      :font-family-labels="fontFamilyLabels"
       @close="closeSettings"
       @open-file="openFileDialog"
       @update:selected-theme-name="selectedThemeName = $event"
       @update:split-method="splitMethod = $event"
       @update:split-regex="splitRegex = $event"
       @update:split-max-line-count="splitMaxLineCount = $event"
+      @update:font-size="fontSize = $event"
+      @update:font-family="fontFamily = $event"
     />
   </main>
 </template>
@@ -59,7 +67,8 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import ConfigDialog from './components/ConfigDialog.vue'
 import TxtReader from './components/TxtReader.vue'
-import type { SplitMethod } from './types/reader-config'
+import type { FontFamily, SplitMethod } from './types/reader-config'
+import { DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE, fontFamilyLabels } from './types/reader-config'
 import { readerThemes } from './types/theme'
 import type { ReaderThemeName } from './types/theme'
 
@@ -67,6 +76,8 @@ const THEME_STORAGE_KEY = 'txt-novel-reader.theme'
 const SPLIT_METHOD_STORAGE_KEY = 'txt-novel-reader.split-method'
 const SPLIT_REGEX_STORAGE_KEY = 'txt-novel-reader.split-regex'
 const SPLIT_MAX_LINE_COUNT_STORAGE_KEY = 'txt-novel-reader.split-max-line-count'
+const FONT_SIZE_STORAGE_KEY = 'txt-novel-reader.font-size'
+const FONT_FAMILY_STORAGE_KEY = 'txt-novel-reader.font-family'
 const NOVEL_SPLIT_CONFIG_KEY_PREFIX = 'txt-novel-reader.novel-split.'
 const NOVEL_CHAPTER_KEY_PREFIX = 'txt-novel-reader.novel-chapter.'
 const LATEST_NOVEL_TEXT_KEY = 'txt-novel-reader.latest-novel-text'
@@ -119,6 +130,9 @@ const themeLabels: Record<ReaderThemeName, string> = {
   dark: '深色'
 }
 const selectedThemeName = ref<ReaderThemeName>('white')
+const fontSize = ref(DEFAULT_FONT_SIZE)
+const fontFamily = ref<FontFamily>(DEFAULT_FONT_FAMILY)
+const fontFamilyNames: FontFamily[] = ['system', 'serif', 'sans-serif', 'monospace']
 
 const selectedTheme = computed(() => readerThemes[selectedThemeName.value])
 const appThemeStyleVars = computed(() => ({
@@ -149,6 +163,10 @@ function isThemeName(value: string): value is ReaderThemeName {
 
 function isSplitMethod(value: string): value is SplitMethod {
   return value === 'regex' || value === 'line-count'
+}
+
+function isFontFamily(value: string): value is FontFamily {
+  return value === 'system' || value === 'serif' || value === 'sans-serif' || value === 'monospace'
 }
 
 function openSettings(): void {
@@ -191,6 +209,16 @@ onMounted(async () => {
   const persistedThemeName = window.localStorage.getItem(THEME_STORAGE_KEY)
   if (persistedThemeName && isThemeName(persistedThemeName)) {
     selectedThemeName.value = persistedThemeName
+  }
+
+  const persistedFontSize = window.localStorage.getItem(FONT_SIZE_STORAGE_KEY)
+  if (persistedFontSize) {
+    fontSize.value = persistedFontSize
+  }
+
+  const persistedFontFamily = window.localStorage.getItem(FONT_FAMILY_STORAGE_KEY)
+  if (persistedFontFamily && isFontFamily(persistedFontFamily)) {
+    fontFamily.value = persistedFontFamily
   }
 
   const persistedSplitRegex = window.localStorage.getItem(SPLIT_REGEX_STORAGE_KEY)
@@ -255,6 +283,14 @@ watch(splitMaxLineCount, (value) => {
 
 watch(isSidebarOpen, (value) => {
   window.localStorage.setItem(SIDEBAR_OPEN_KEY, String(value))
+})
+
+watch(fontSize, (value) => {
+  window.localStorage.setItem(FONT_SIZE_STORAGE_KEY, value)
+})
+
+watch(fontFamily, (value) => {
+  window.localStorage.setItem(FONT_FAMILY_STORAGE_KEY, value)
 })
 
 watch(chapterIndex, (value) => {

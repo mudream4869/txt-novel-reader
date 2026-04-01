@@ -66,6 +66,8 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import type { FontFamily } from '../types/reader-config'
+import { fontFamilyCss } from '../types/reader-config'
 import type { ReaderTheme } from '../types/theme'
 
 interface Props {
@@ -75,9 +77,11 @@ interface Props {
   novelKey?: string | null
   initialIndex?: number
   isSidebarOpen?: boolean
+  fontSize?: string
+  fontFamily?: FontFamily
 }
 
-const { chapter_title_list, read_chapter, theme, novelKey, initialIndex, isSidebarOpen = true } = defineProps<Props>()
+const { chapter_title_list, read_chapter, theme, novelKey, initialIndex, isSidebarOpen = true, fontSize = '18', fontFamily = 'system' } = defineProps<Props>()
 
 const emit = defineEmits<{
   'update:selectedIndex': [value: number]
@@ -118,7 +122,9 @@ const themeStyleVars = computed(() => ({
   '--reader-button-active-bg': theme.colors.buttonActiveBackground,
   '--reader-button-active-border': theme.colors.buttonActiveBorder,
   '--reader-text-primary': theme.colors.textPrimary,
-  '--reader-text-secondary': theme.colors.textSecondary
+  '--reader-text-secondary': theme.colors.textSecondary,
+  '--reader-font-size': `${fontSize}px`,
+  '--reader-font-family': fontFamilyCss[fontFamily]
 }))
 
 function scrollToTop(): void {
@@ -283,6 +289,8 @@ onBeforeUnmount(() => {
   line-height: 1.6;
   white-space: pre-wrap;
   color: var(--reader-text-primary);
+  font-size: var(--reader-font-size);
+  font-family: var(--reader-font-family);
 }
 
 .chapter-nav {
